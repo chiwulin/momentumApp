@@ -7,8 +7,9 @@ A native iOS todo app built with SwiftUI featuring AI task breakdown, voice inpu
 ### Core Features
 - **AI Task Breakdown**: Long press (800ms) on any main task to automatically break it down into 2-4 smaller subtasks using OpenAI GPT-3.5-turbo
 - **Voice Input**: Long press (500ms) on the bottom circular button to record voice and add tasks (supports Traditional Chinese)
-- **Task Completion**: Long press (1000ms) on subtask cards to mark as complete with visual feedback
-- **Task Deletion**: Tap the delete icon on main task cards to remove tasks
+- **Task Completion**: Tap the checkbox on subtask cards to mark as complete with visual feedback
+- **Task Deletion**: Swipe left on main task cards to delete, or use the context menu
+- **Vertical Subtask Layout**: Subtasks are displayed vertically below their parent task for easy viewing
 - **Data Persistence**: All tasks are saved locally using SwiftData
 
 ### Design Highlights
@@ -25,6 +26,40 @@ A native iOS todo app built with SwiftUI featuring AI task breakdown, voice inpu
 - Completion animation with subtask reordering
 - Progress bar during long press actions
 - Scale feedback on all interactive elements
+
+## Setup
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/chiwulin/momentumApp.git
+cd momentumApp
+```
+
+### 2. Configure OpenAI API Key
+
+**IMPORTANT**: Never commit your API key to git!
+
+The app requires an OpenAI API key to use the AI task breakdown feature. Set it up in Xcode:
+
+1. Open `momentum.xcodeproj` in Xcode
+2. Select the **momentum** scheme (top bar, next to your device)
+3. Click **Edit Scheme...**
+4. Select **Run** > **Arguments**
+5. Under **Environment Variables**, find `OPENAI_API_KEY`
+6. Paste your OpenAI API key in the **Value** field
+7. Click **Close**
+
+Your API key will be stored locally in your Xcode user data (not in git).
+
+**Get an OpenAI API Key:**
+- Visit https://platform.openai.com/api-keys
+- Create a new secret key
+- Copy and paste it into Xcode as described above
+
+### 3. Build and Run
+- Open the project in Xcode 16.4+
+- Select an iOS 18.5+ simulator or device
+- Press ⌘R to build and run
 
 ## Requirements
 
