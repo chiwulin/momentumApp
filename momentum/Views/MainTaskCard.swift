@@ -4,20 +4,23 @@ struct MainTaskCard: View {
     let task: TaskItem
     let onDelete: () -> Void
     let onLongPress: () -> Void
+    let openAIService: OpenAIService
 
     @State private var isPressed = false
     @State private var isPulsing = false
+    @State private var aiIcon: String?
+    @State private var aiColor: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Main task card
             HStack(spacing: 12) {
-                // Smart circular icon based on task title
-                Image(systemName: iconForTask(task.title))
+                // AI-powered circular icon based on task title
+                Image(systemName: aiIcon ?? iconForTask(task.title))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 32, height: 32)
-                    .background(iconColor(for: task.title))
+                    .background(colorFromString(aiColor ?? "red"))
                     .clipShape(Circle())
 
                 // Task content
@@ -82,107 +85,65 @@ struct MainTaskCard: View {
         .onChange(of: task.isBreakingDown) { _, isBreaking in
             isPulsing = isBreaking
         }
+        .task(id: task.title) {
+            await loadAIIcon()
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(task.title). Long press to break down into subtasks.")
         .accessibilityHint(task.progressText ?? "")
     }
 
+    private func loadAIIcon() async {
+        do {
+            let iconResponse = try await openAIService.selectIcon(for: task.title)
+            await MainActor.run {
+                aiIcon = iconResponse.symbol
+                aiColor = iconResponse.color
+            }
+        } catch {
+            // Silently fall back to keyword-based icon selection
+            print("Failed to load AI icon: \(error)")
+        }
+    }
+
+    // Fallback icon selection (English-only, simplified)
     private func iconForTask(_ title: String) -> String {
         let lowercased = title.lowercased()
 
         // Sports & Activities
-        if lowercased.contains("golf") || lowercased.contains("高爾夫") {
+        if lowercased.contains("golf") {
             return "figure.golf"
-        } else if lowercased.contains("gym") || lowercased.contains("workout") || lowercased.contains("exercise") || lowercased.contains("運動") {
+        } else if lowercased.contains("gym") || lowercased.contains("workout") || lowercased.contains("exercise") {
             return "figure.run"
-        } else if lowercased.contains("yoga") || lowercased.contains("瑜伽") {
+        } else if lowercased.contains("yoga") {
             return "figure.mind.and.body"
-        } else if lowercased.contains("swim") || lowercased.contains("游泳") {
-            return "figure.pool.swim"
         }
 
         // Communication
-        else if lowercased.contains("call") || lowercased.contains("phone") || lowercased.contains("電話") {
+        else if lowercased.contains("call") || lowercased.contains("phone") {
             return "phone.fill"
-        } else if lowercased.contains("message") || lowercased.contains("text") || lowercased.contains("訊息") || lowercased.contains("聊天") {
+        } else if lowercased.contains("message") || lowercased.contains("text") {
             return "message.fill"
-        } else if lowercased.contains("email") || lowercased.contains("mail") || lowercased.contains("郵件") {
+        } else if lowercased.contains("email") || lowercased.contains("mail") {
             return "envelope.fill"
-        } else if lowercased.contains("meeting") || lowercased.contains("會議") {
+        } else if lowercased.contains("meeting") {
             return "person.2.fill"
-        } else if lowercased.contains("video") || lowercased.contains("zoom") || lowercased.contains("視訊") {
-            return "video.fill"
         }
 
         // Work & Productivity
-        else if lowercased.contains("write") || lowercased.contains("寫") || lowercased.contains("編輯") {
+        else if lowercased.contains("write") {
             return "pencil"
-        } else if lowercased.contains("read") || lowercased.contains("閱讀") || lowercased.contains("book") {
+        } else if lowercased.contains("read") || lowercased.contains("book") {
             return "book.fill"
-        } else if lowercased.contains("research") || lowercased.contains("search") || lowercased.contains("搜尋") || lowercased.contains("研究") {
-            return "magnifyingglass"
-        } else if lowercased.contains("review") || lowercased.contains("檢閱") || lowercased.contains("check") {
-            return "checkmark.circle.fill"
-        } else if lowercased.contains("plan") || lowercased.contains("規劃") || lowercased.contains("schedule") {
-            return "calendar"
-        } else if lowercased.contains("presentation") || lowercased.contains("簡報") {
-            return "rectangle.on.rectangle"
-        } else if lowercased.contains("code") || lowercased.contains("程式") || lowercased.contains("develop") {
+        } else if lowercased.contains("code") || lowercased.contains("develop") {
             return "chevron.left.forwardslash.chevron.right"
         }
 
         // Home & Errands
-        else if lowercased.contains("buy") || lowercased.contains("購買") || lowercased.contains("shop") {
+        else if lowercased.contains("buy") || lowercased.contains("shop") {
             return "cart.fill"
-        } else if lowercased.contains("cook") || lowercased.contains("烹飪") || lowercased.contains("meal") {
+        } else if lowercased.contains("cook") || lowercased.contains("meal") {
             return "fork.knife"
-        } else if lowercased.contains("clean") || lowercased.contains("清潔") {
-            return "sparkles"
-        } else if lowercased.contains("laundry") || lowercased.contains("洗衣") {
-            return "washer.fill"
-        } else if lowercased.contains("fix") || lowercased.contains("repair") || lowercased.contains("修理") {
-            return "wrench.fill"
-        }
-
-        // Health & Wellness
-        else if lowercased.contains("doctor") || lowercased.contains("hospital") || lowercased.contains("醫生") || lowercased.contains("醫院") {
-            return "cross.case.fill"
-        } else if lowercased.contains("medicine") || lowercased.contains("藥") || lowercased.contains("pill") {
-            return "pills.fill"
-        } else if lowercased.contains("sleep") || lowercased.contains("睡眠") || lowercased.contains("rest") {
-            return "bed.double.fill"
-        }
-
-        // Travel & Transportation
-        else if lowercased.contains("flight") || lowercased.contains("fly") || lowercased.contains("航班") || lowercased.contains("飛") {
-            return "airplane"
-        } else if lowercased.contains("drive") || lowercased.contains("car") || lowercased.contains("開車") {
-            return "car.fill"
-        } else if lowercased.contains("train") || lowercased.contains("火車") {
-            return "train.side.front.car"
-        }
-
-        // Weather & Nature
-        else if lowercased.contains("weather") || lowercased.contains("天氣") {
-            return "sun.max.fill"
-        } else if lowercased.contains("walk") || lowercased.contains("散步") || lowercased.contains("hike") {
-            return "figure.walk"
-        }
-
-        // Finance
-        else if lowercased.contains("pay") || lowercased.contains("payment") || lowercased.contains("付款") || lowercased.contains("bill") {
-            return "dollarsign.circle.fill"
-        } else if lowercased.contains("bank") || lowercased.contains("銀行") {
-            return "building.columns.fill"
-        }
-
-        // Entertainment
-        else if lowercased.contains("movie") || lowercased.contains("film") || lowercased.contains("電影") {
-            return "film.fill"
-        } else if lowercased.contains("music") || lowercased.contains("音樂") {
-            return "music.note"
-        } else if lowercased.contains("game") || lowercased.contains("遊戲") {
-            return "gamecontroller.fill"
         }
 
         // Default
@@ -191,64 +152,17 @@ struct MainTaskCard: View {
         }
     }
 
-    private func iconColor(for title: String) -> Color {
-        let lowercased = title.lowercased()
-
-        // Sports - Orange/Red
-        if lowercased.contains("golf") || lowercased.contains("gym") || lowercased.contains("workout") ||
-           lowercased.contains("exercise") || lowercased.contains("運動") || lowercased.contains("高爾夫") {
-            return Color.orange
-        }
-
-        // Communication - Blue
-        else if lowercased.contains("call") || lowercased.contains("phone") || lowercased.contains("message") ||
-                lowercased.contains("email") || lowercased.contains("mail") || lowercased.contains("meeting") ||
-                lowercased.contains("電話") || lowercased.contains("訊息") || lowercased.contains("郵件") || lowercased.contains("會議") {
-            return Color.blue
-        }
-
-        // Work - Purple
-        else if lowercased.contains("write") || lowercased.contains("read") || lowercased.contains("research") ||
-                lowercased.contains("code") || lowercased.contains("寫") || lowercased.contains("閱讀") || lowercased.contains("程式") {
-            return Color.purple
-        }
-
-        // Shopping - Green
-        else if lowercased.contains("buy") || lowercased.contains("shop") || lowercased.contains("購買") {
-            return Color.green
-        }
-
-        // Food - Brown/Orange
-        else if lowercased.contains("cook") || lowercased.contains("meal") || lowercased.contains("烹飪") {
-            return Color.brown
-        }
-
-        // Health - Red
-        else if lowercased.contains("doctor") || lowercased.contains("hospital") || lowercased.contains("medicine") ||
-                lowercased.contains("醫生") || lowercased.contains("醫院") {
-            return Color.red
-        }
-
-        // Travel - Teal
-        else if lowercased.contains("flight") || lowercased.contains("fly") || lowercased.contains("drive") ||
-                lowercased.contains("航班") || lowercased.contains("開車") {
-            return Color.teal
-        }
-
-        // Finance - Green
-        else if lowercased.contains("pay") || lowercased.contains("bank") || lowercased.contains("付款") || lowercased.contains("銀行") {
-            return Color.green
-        }
-
-        // Entertainment - Pink
-        else if lowercased.contains("movie") || lowercased.contains("music") || lowercased.contains("game") ||
-                lowercased.contains("電影") || lowercased.contains("音樂") || lowercased.contains("遊戲") {
-            return Color.pink
-        }
-
-        // Default - Red
-        else {
-            return Color.red
+    private func colorFromString(_ colorName: String) -> Color {
+        switch colorName.lowercased() {
+        case "orange": return .orange
+        case "blue": return .blue
+        case "purple": return .purple
+        case "green": return .green
+        case "brown": return .brown
+        case "red": return .red
+        case "teal": return .teal
+        case "pink": return .pink
+        default: return .red
         }
     }
 }

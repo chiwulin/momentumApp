@@ -5,6 +5,11 @@ struct SubtaskResponse: Codable {
     let estimatedMinutes: Int
 }
 
+struct IconResponse: Codable {
+    let symbol: String
+    let color: String
+}
+
 struct OpenAIMessage: Codable {
     let role: String
     let content: String
@@ -188,6 +193,83 @@ class OpenAIService: ObservableObject {
         }
 
         return subtasks
+    }
+
+    func selectIcon(for taskTitle: String) async throws -> IconResponse {
+        guard !apiKey.isEmpty else {
+            throw OpenAIError.missingAPIKey
+        }
+
+        let systemPrompt = """
+        You are an SF Symbols expert. Given a task title, select the most appropriate SF Symbol icon and color.
+
+        You MUST respond with valid JSON in this exact format:
+        {
+          "symbol": "sf.symbol.name",
+          "color": "colorName"
+        }
+
+        Rules for SF Symbols:
+        - Use actual SF Symbol names (e.g., "figure.golf", "cart.fill", "envelope.fill")
+        - Common symbols: checkmark, phone.fill, message.fill, envelope.fill, calendar, cart.fill,
+          fork.knife, car.fill, airplane, book.fill, pencil, magnifyingglass, person.2.fill,
+          video.fill, dollarsign.circle.fill, film.fill, music.note, gamecontroller.fill,
+          figure.run, figure.golf, wrench.fill, cross.case.fill, sparkles
+        - Default to "checkmark" if unsure
+
+        Rules for colors (use these exact names):
+        - "orange" for sports, exercise, fitness
+        - "blue" for communication, calls, messages, emails
+        - "purple" for work, productivity, writing, coding
+        - "green" for shopping, finance, money
+        - "brown" for food, cooking
+        - "red" for health, medical, urgent tasks
+        - "teal" for travel, transportation
+        - "pink" for entertainment, leisure
+        - Default to "red" if unsure
+        """
+
+        let request = OpenAIRequest(
+            model: "gpt-4o-mini",
+            messages: [
+                OpenAIMessage(role: "system", content: systemPrompt),
+                OpenAIMessage(role: "user", content: "Select icon for task: \(taskTitle)")
+            ],
+            temperature: 0.3,
+            response_format: OpenAIRequest.ResponseFormat(type: "json_object")
+        )
+
+        var urlRequest = URLRequest(url: URL(string: baseURL)!)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.httpBody = try JSONEncoder().encode(request)
+        urlRequest.timeoutInterval = 10 // Shorter timeout for icon selection
+
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw OpenAIError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            if let errorData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let error = errorData["error"] as? [String: Any],
+               let message = error["message"] as? String {
+                throw OpenAIError.apiErrorWithMessage(statusCode: httpResponse.statusCode, message: message)
+            }
+            throw OpenAIError.apiError(statusCode: httpResponse.statusCode)
+        }
+
+        let openAIResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+
+        guard let content = openAIResponse.choices.first?.message.content,
+              let contentData = content.data(using: .utf8) else {
+            throw OpenAIError.noContent
+        }
+
+        let iconResponse = try JSONDecoder().decode(IconResponse.self, from: contentData)
+        return iconResponse
     }
 }
 

@@ -61,7 +61,8 @@ struct ContentView: View {
                                     },
                                     onLongPress: {
                                         breakdownTask(task)
-                                    }
+                                    },
+                                    openAIService: openAIService
                                 )
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     Button(role: .destructive) {

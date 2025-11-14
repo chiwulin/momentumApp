@@ -27,6 +27,27 @@ A native iOS todo app built with SwiftUI featuring AI task breakdown, voice inpu
 - Progress bar during long press actions
 - Scale feedback on all interactive elements
 
+## Changelog
+
+### [2025-11-13] - AI-Powered Icon Selection
+**Added**
+- AI-powered icon selection using OpenAI GPT-4o-mini for intelligent SF Symbol selection
+- Automatic icon and color assignment based on task semantics
+- New `selectIcon()` method in `OpenAIService` for real-time icon suggestions
+- `IconResponse` struct to handle SF Symbol and color data from API
+
+**Changed**
+- MainTaskCard now uses AI to select appropriate SF Symbols and colors for each task
+- Simplified fallback icon selection (removed bilingual support, English-only)
+- Reduced keyword matching code from ~170 lines to ~50 lines
+- Icon selection is now context-aware and understands task semantics beyond simple keywords
+
+**Technical Details**
+- Uses GPT-4o-mini with 0.3 temperature for consistent icon selection
+- 10-second timeout for quick icon loading
+- Graceful fallback to keyword-based selection if API fails
+- Supports all SF Symbol categories: sports, communication, work, health, travel, entertainment, etc.
+
 ## Setup
 
 ### 1. Clone the Repository
