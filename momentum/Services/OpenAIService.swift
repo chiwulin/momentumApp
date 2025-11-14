@@ -69,7 +69,7 @@ class OpenAIService: ObservableObject {
         """
 
         let request = OpenAIRequest(
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini",
             messages: [
                 OpenAIMessage(role: "system", content: systemPrompt),
                 OpenAIMessage(role: "user", content: "Break down this task: \(taskTitle)")

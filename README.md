@@ -5,7 +5,7 @@ A native iOS todo app built with SwiftUI featuring AI task breakdown, voice inpu
 ## Features
 
 ### Core Features
-- **AI Task Breakdown**: Long press (800ms) on any main task to automatically break it down into 2-4 smaller subtasks using OpenAI GPT-3.5-turbo
+- **AI Task Breakdown**: Long press (800ms) on any main task to automatically break it down into 2-4 smaller subtasks using OpenAI GPT-4o-mini
 - **Voice Input**: Long press (500ms) on the bottom circular button to record voice and add tasks (supports Traditional Chinese)
 - **Task Completion**: Tap the checkbox on subtask cards to mark as complete with visual feedback
 - **Task Deletion**: Swipe left on main task cards to delete, or use the context menu
